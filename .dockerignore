@@ -1,0 +1,7 @@
+.venv
+__pycache__
+model/artifacts/*
+*.pyc
+.git
+.gitignore
+*.DS_Store

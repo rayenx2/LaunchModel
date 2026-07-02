@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mlflow.fullname" . }}
+spec:
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+    spec:
+      containers:
+      - name: mlflow
+        image: {{ .Values.image }}
+        ports:
+        - containerPort: 5000
+        env:
+        - name: MLFLOW_BACKEND_STORE_URI
+          value: sqlite:////mlruns/mlflow.db
+        - name: MLFLOW_DEFAULT_ARTIFACT_ROOT
+          value: /mlruns
+        volumeMounts:
+        - name: mlruns
+          mountPath: /mlruns
+        command: ["mlflow","server","--host","0.0.0.0","--port","5000","--backend-store-uri","$(MLFLOW_BACKEND_STORE_URI)","--default-artifact-root","$(MLFLOW_DEFAULT_ARTIFACT_ROOT)"]
+      volumes:
+      - name: mlruns
+        persistentVolumeClaim:
+          claimName: {{ include "mlflow.fullname" . }}

@@ -1,0 +1,57 @@
+services:
+  trainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: launchmodel:latest
+    command: ["python", "model/train.py", "--dataset", "sample"]
+    volumes:
+      - ./model/artifacts:/app/model/artifacts
+      - ./ops/data:/app/ops/data
+      - ./mlruns:/mlruns
+    environment:
+      - ARTIFACT_DIR=model/artifacts
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      mlflow:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: launchmodel:latest
+    depends_on:
+      trainer:
+        condition: service_completed_successfully
+    ports:
+      - "8015:8000"
+    volumes:
+      - ./model/artifacts:/app/model/artifacts
+      - ./ops/data:/app/ops/data
+    environment:
+      - MODEL_PATH=model/artifacts/model.pkl
+      - ENCODER_PATH=model/artifacts/encoder.pkl
+      - REQUEST_LOG=ops/data/live_requests.jsonl
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.16.0
+    ports:
+      - "5015:5000"
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=sqlite:///mlflow.db
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlruns
+    volumes:
+      - ./mlruns:/mlruns
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlruns
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s

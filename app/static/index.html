@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LaunchModel — Model Serving Console</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  .glow { box-shadow: 0 0 0 1px rgba(45,212,191,0.15), 0 0 24px rgba(45,212,191,0.08); }
+  .scan-line {
+    background: linear-gradient(180deg, rgba(45,212,191,0) 0%, rgba(45,212,191,0.06) 50%, rgba(45,212,191,0) 100%);
+  }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:linear-gradient(135deg,#2dd4bf,#6366f1)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#080f1c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5zM4 13a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-6zM16 13a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-6z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-semibold tracking-tight">LaunchModel</h1>
+          <p class="text-xs text-slate-400">Model Serving &amp; Observability Console</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 text-xs">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          API Online
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-6xl mx-auto px-6 py-10 w-full">
+
+    <!-- Status cards -->
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
+      <div class="rounded-xl border border-slate-800 bg-slate-900 p-4 glow">
+        <p class="text-xs text-slate-400 uppercase tracking-wide">Service</p>
+        <p class="text-xl font-semibold mt-1 text-teal-300">FastAPI</p>
+        <p class="text-xs text-slate-500 mt-1">/health · /predict · /metrics</p>
+      </div>
+      <div class="rounded-xl border border-slate-800 bg-slate-900 p-4 glow">
+        <p class="text-xs text-slate-400 uppercase tracking-wide">Model</p>
+        <p class="text-xl font-semibold mt-1 text-teal-300">LogReg Pipeline</p>
+        <p class="text-xs text-slate-500 mt-1">income &gt; $50K classifier</p>
+      </div>
+      <div class="rounded-xl border border-slate-800 bg-slate-900 p-4 glow">
+        <p class="text-xs text-slate-400 uppercase tracking-wide">Tracking</p>
+        <p class="text-xl font-semibold mt-1 text-teal-300">MLflow</p>
+        <p class="text-xs text-slate-500 mt-1">localhost:5015</p>
+      </div>
+      <div class="rounded-xl border border-slate-800 bg-slate-900 p-4 glow">
+        <p class="text-xs text-slate-400 uppercase tracking-wide">Orchestration</p>
+        <p class="text-xl font-semibold mt-1 text-teal-300">K8s + Helm</p>
+        <p class="text-xs text-slate-500 mt-1">HPA · ServiceMonitor · CronJob</p>
+      </div>
+    </section>
+
+    <!-- Prediction console -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+        <h2 class="text-base font-semibold mb-1 flex items-center gap-2">
+          <span class="text-teal-400">▣</span> Inference Console
+        </h2>
+        <p class="text-sm text-slate-400 mb-4">Send a feature payload to <code class="text-teal-300">/predict</code> and view the model's probability output.</p>
+
+        <form id="predict-form" class="space-y-3 text-sm">
+          <div class="grid grid-cols-2 gap-3">
+            <label class="block">Age
+              <input name="age" type="number" value="39" class="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 focus:border-teal-400 focus:outline-none" />
+            </label>
+            <label class="block">Hours / week
+              <input name="hours_per_week" type="number" value="40" class="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 focus:border-teal-400 focus:outline-none" />
+            </label>
+            <label class="block">Education
+              <select name="education" class="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 focus:border-teal-400 focus:outline-none">
+                <option>Bachelors</option><option>Masters</option><option>HS-grad</option><option>11th</option><option>9th</option>
+              </select>
+            </label>
+            <label class="block">Occupation
+              <select name="occupation" class="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 focus:border-teal-400 focus:outline-none">
+                <option>Tech-support</option><option>Exec-managerial</option><option>Prof-specialty</option><option>Handlers-cleaners</option><option>Other-service</option>
+              </select>
+            </label>
+            <label class="block">Marital Status
+              <select name="marital_status" class="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 focus:border-teal-400 focus:outline-none">
+                <option>Never-married</option><option>Married-civ-spouse</option><option>Divorced</option><option>Married-spouse-absent</option>
+              </select>
+            </label>
+            <label class="block">Sex
+              <select name="sex" class="mt-1 w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 focus:border-teal-400 focus:outline-none">
+                <option>Male</option><option>Female</option>
+              </select>
+            </label>
+          </div>
+          <button type="submit" class="w-full mt-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold rounded-lg py-2.5 transition">Run Inference</button>
+        </form>
+
+        <div id="result" class="mt-4 hidden rounded-lg border border-teal-500/30 bg-teal-500/5 p-4">
+          <p class="text-xs text-slate-400">Predicted probability of income &gt; $50K</p>
+          <p id="result-value" class="text-3xl font-bold text-teal-300 mt-1">--</p>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+        <h2 class="text-base font-semibold mb-4 flex items-center gap-2">
+          <span class="text-teal-400">◈</span> Model Info
+        </h2>
+        <div id="model-info" class="grid grid-cols-2 gap-3 text-sm mb-4">
+          <div class="text-slate-500">Loading…</div>
+        </div>
+
+        <div class="border-t border-slate-800 pt-4 mb-2">
+          <span class="text-xs text-slate-400 uppercase tracking-wide">System Endpoints</span>
+        </div>
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-center justify-between">
+            <span class="text-slate-300">GET /health</span>
+            <a href="/health" target="_blank" class="text-teal-400 hover:underline">open →</a>
+          </li>
+          <li class="flex items-center justify-between">
+            <span class="text-slate-300">GET /metrics</span>
+            <a href="/metrics" target="_blank" class="text-teal-400 hover:underline">open →</a>
+          </li>
+          <li class="flex items-center justify-between">
+            <span class="text-slate-300">API Docs (Swagger)</span>
+            <a href="/docs" target="_blank" class="text-teal-400 hover:underline">open →</a>
+          </li>
+        </ul>
+
+        <div class="mt-4 p-4 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-400 leading-relaxed">
+          This console runs entirely against the live FastAPI service — no separate
+          frontend container, no reverse proxy. Training metrics (AUC / F1) are
+          tracked in MLflow at <code class="text-teal-300">localhost:5015</code>.
+          Drift detection runs via a Kubernetes CronJob comparing live request
+          distributions to a saved baseline.
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent predictions -->
+    <section class="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-6">
+      <h2 class="text-base font-semibold mb-4 flex items-center gap-2">
+        <span class="text-teal-400">▤</span> Recent Predictions
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-1"></span>
+      </h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-xs text-slate-500 uppercase tracking-wide border-b border-slate-800">
+              <th class="py-2 pr-4">Time</th>
+              <th class="py-2 pr-4">Age</th>
+              <th class="py-2 pr-4">Education</th>
+              <th class="py-2 pr-4">Occupation</th>
+              <th class="py-2 pr-4">Hours/wk</th>
+              <th class="py-2">Probability &gt;$50K</th>
+            </tr>
+          </thead>
+          <tbody id="recent-body">
+            <tr><td colspan="6" class="py-3 text-slate-500">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-slate-800 text-center text-xs text-slate-500 py-6">
+    Rayen Lassoued |
+    <a href="https://github.com/rayenx2" class="text-teal-400 hover:underline">github.com/rayenx2</a> |
+    <a href="https://linkedin.com/in/Rayen-Lassoued" class="text-teal-400 hover:underline">linkedin.com/in/Rayen-Lassoued</a>
+  </footer>
+
+<script>
+document.getElementById('predict-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const payload = {
+    features: {
+      age: parseInt(fd.get('age')),
+      workclass: "Private",
+      fnlwgt: 200000,
+      education: fd.get('education'),
+      education_num: 10,
+      marital_status: fd.get('marital_status'),
+      occupation: fd.get('occupation'),
+      relationship: "Not-in-family",
+      race: "White",
+      sex: fd.get('sex'),
+      capital_gain: 0,
+      capital_loss: 0,
+      hours_per_week: parseInt(fd.get('hours_per_week')),
+      native_country: "United-States"
+    }
+  };
+  try {
+    const res = await fetch('/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    const box = document.getElementById('result');
+    const val = document.getElementById('result-value');
+    box.classList.remove('hidden');
+    if (data.probability_over_50k !== undefined) {
+      val.textContent = (data.probability_over_50k * 100).toFixed(2) + '%';
+    } else {
+      val.textContent = 'Error: ' + (data.detail || 'unknown');
+    }
+  } catch (err) {
+    alert('Request failed: ' + err);
+  }
+  refreshRecent();
+});
+
+async function refreshModelInfo() {
+  try {
+    const res = await fetch('/model/info');
+    const d = await res.json();
+    const auc = d.training_metrics?.auc;
+    const f1 = d.training_metrics?.f1;
+    document.getElementById('model-info').innerHTML = `
+      <div><p class="text-xs text-slate-500">Model Type</p><p class="text-teal-300 font-semibold">${d.model_type}</p></div>
+      <div><p class="text-xs text-slate-500">Uptime</p><p class="text-teal-300 font-semibold">${Math.round(d.uptime_seconds)}s</p></div>
+      <div><p class="text-xs text-slate-500">Training AUC</p><p class="text-teal-300 font-semibold">${auc !== undefined ? auc.toFixed(3) : '—'}</p></div>
+      <div><p class="text-xs text-slate-500">Training F1</p><p class="text-teal-300 font-semibold">${f1 !== undefined ? f1.toFixed(3) : '—'}</p></div>
+    `;
+  } catch (err) {
+    document.getElementById('model-info').innerHTML = '<div class="text-red-400 col-span-2">Failed to load model info</div>';
+  }
+}
+
+async function refreshRecent() {
+  try {
+    const res = await fetch('/predictions/recent?limit=10');
+    const d = await res.json();
+    const body = document.getElementById('recent-body');
+    if (!d.predictions || d.predictions.length === 0) {
+      body.innerHTML = '<tr><td colspan="6" class="py-3 text-slate-500">No predictions yet — submit one on the left.</td></tr>';
+      return;
+    }
+    body.innerHTML = d.predictions.slice().reverse().map(p => {
+      const t = new Date(p.ts * 1000).toLocaleTimeString();
+      const pct = (p.prediction * 100).toFixed(2) + '%';
+      const color = p.prediction > 0.5 ? 'text-teal-300' : 'text-slate-400';
+      return `<tr class="border-b border-slate-800/60">
+        <td class="py-2 pr-4 text-slate-400 font-mono">${t}</td>
+        <td class="py-2 pr-4">${p.features.age}</td>
+        <td class="py-2 pr-4">${p.features.education}</td>
+        <td class="py-2 pr-4">${p.features.occupation}</td>
+        <td class="py-2 pr-4">${p.features.hours_per_week}</td>
+        <td class="py-2 font-semibold ${color}">${pct}</td>
+      </tr>`;
+    }).join('');
+  } catch (err) {
+    document.getElementById('recent-body').innerHTML = '<tr><td colspan="6" class="py-3 text-red-400">Failed to load recent predictions</td></tr>';
+  }
+}
+
+refreshModelInfo();
+refreshRecent();
+setInterval(refreshModelInfo, 10000);
+setInterval(refreshRecent, 5000);
+</script>
+</body>
+</html>

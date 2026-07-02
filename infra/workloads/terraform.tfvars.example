@@ -1,0 +1,5 @@
+project_id = "your-gcp-project-id"
+region     = "europe-west2"
+cluster_name = "cloudops-platform"
+image_repository = "ghcr.io/rayenx2/cloudops-platform"
+image_tag = "latest"

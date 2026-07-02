@@ -1,0 +1,54 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/rayenx2/launchmodel
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+env:
+  - name: MODEL_PATH
+    value: /app/model/artifacts/model.pkl
+  - name: ENCODER_PATH
+    value: /app/model/artifacts/encoder.pkl
+  - name: REQUEST_LOG
+    value: /app/ops/data/live_requests.jsonl
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+serviceMonitor:
+  enabled: true
+  interval: 15s
+  scrapeTimeout: 10s
+
+driftCron:
+  enabled: true
+  schedule: "0 1 * * *"  # 01:00 every day
+  threshold: "0.2"
+

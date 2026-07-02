@@ -1,0 +1,6 @@
+apiVersion: v2
+name: launchmodel-mlflow
+description: MLflow tracking server for LaunchModel
+type: application
+version: 0.1.0
+appVersion: "2.16.0"

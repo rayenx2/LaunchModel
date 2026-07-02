@@ -1,0 +1,25 @@
+{{- if .Values.driftCron.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "app.fullname" . }}-drift
+spec:
+  schedule: "{{ .Values.driftCron.schedule }}"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: drift
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            command: ["python","-m","monitoring.drift_job"]
+            env:
+            - name: DRIFT_THRESHOLD
+              value: "{{ .Values.driftCron.threshold }}"
+            - name: LIVE_LOG
+              value: "/app/ops/data/live_requests.jsonl"
+            - name: BASELINE_PATH
+              value: "/app/model/artifacts/baseline_feature_freq.json"
+{{- end }}
